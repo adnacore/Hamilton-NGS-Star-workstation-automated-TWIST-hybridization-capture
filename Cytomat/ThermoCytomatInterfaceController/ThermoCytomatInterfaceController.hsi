@@ -1,0 +1,1022 @@
+// {{{ 2 "IncludeGuard" "PragmaOnce"
+#pragma once
+// }} ""
+#include "ASWStandard\\TraceLevel\\TraceLevel.hsl"
+#include "ThermoScientific Cytomat Interface\\ThermoScientific Cytomat Interface.hsl"
+#include "ASWStandard\\ASWGlobal\\ASWGlobal.hsl"
+/* {{ 2 "LibraryInsertLine" "" */ // }} ""
+// {{ 2 "TemplateIncludeBlock" ""
+#include "HSLMETEDLib.hs_"
+#include "HSLMECCLib.hs_"
+#include "HSLPTLLib.hsl"
+// }} ""
+// {{{ 2 "LibraryNamespace" "Begin"
+namespace THERMOCYTOMATINTERFACECONTROLLER {
+// }} ""
+variable _arrintModuleID[];
+/* {{ 2 "VariableInsertLine" "" */ // }} ""
+// {{{ 2 "SubmethodForwardDeclaration" ""
+function AgitationGetParameters( variable i_intDeviceNumber, variable & o_intAgitationFrequency, variable & o_intAgitationAmplitude ) variable ;
+function AgitationSetParameters( variable i_intDeviceNumber, variable i_intAgitationFrequency, variable i_intAgitationAmplitude ) variable ;
+function GetCytomatState( variable i_intDeviceNumber, variable & o_blnBusy, variable & o_blnReady, variable & o_blnWarning, variable & o_blnError, variable & o_blnHandler, variable & o_blnGate, variable & o_blnDoor, variable & o_blnTransfer ) variable ;
+function GetEnvironment( variable i_intDeviceNumber, variable & o_fltTemperatureNominal, variable & o_fltTemperatureActual, variable & o_fltHumidityNominal, variable & o_fltHumidityActual, variable & o_fltCO2Nominal, variable & o_fltCO2Actual, variable & o_fltO2Nominal, variable & o_fltO2Actual ) variable ;
+function GetLabwareIDs( variable i_intDeviceNumber, variable i_intStacker, variable i_blnWaitForFinish, variable & o_arrStrLabwareIDs[] ) variable ;
+function GetPlateByLabwareID( variable i_intDeviceNumber, variable i_strLabwareID, variable i_blnWaitForFinish ) variable ;
+function GetPlateByPosition( variable i_intDeviceNumber, variable i_intStacker, variable i_intLevel, variable i_blnWaitForFinish ) variable ;
+function Initialize( variable i_blnSimulationMode, variable i_intTraceLevel, variable i_blnExtendedTrace, variable i_intCOMPort, variable i_intCytomatType, variable i_intNumberOfDevices ) variable ;
+function InventoryScanFull( variable i_intDeviceNumber, variable i_blnWaitForFinish ) variable ;
+function InventoryScanPartial( variable i_intDeviceNumber, variable i_intStartStacker, variable i_intStopStacker, variable i_blnWaitForFinish ) variable ;
+function MoveTransferstation( variable i_intDeviceNumber, variable i_intPositionTransferStation, variable i_blnWaitForFinish ) variable ;
+function SendFirmwareCommand( variable i_intDeviceNumber, variable i_strCommand, variable i_blnWaitForFinish, variable & o_strResponse ) variable ;
+function SetEnvironment( variable i_intDeviceNumber, variable i_fltTemperatureNominal, variable i_fltHumidityNominal, variable i_fltCO2Nominal, variable i_fltO2Nominal ) variable ;
+function SetPitch( variable i_intDeviceNumber, variable i_intStacker, variable i_intPitch ) variable ;
+function StartStopAgitation( variable i_intDeviceNumber, variable i_blnStartStop ) variable ;
+function StorePlateByPosition( variable i_intDeviceNumber, variable i_intStacker, variable i_intLevel, variable i_blnWaitForFinish ) variable ;
+function Terminate(  ) void ;
+function TowerShakerGetParameters( variable i_intDeviceNumber, variable & o_intNumberOfToS, variable & o_intFrequencyToS1, variable & o_intFrequencyToS2, variable & o_intStatusToS1, variable & o_intStatusToS2 ) variable ;
+function TowerShakerOpenCloseClamp( variable i_intDeviceNumber, variable i_blnOpenClose, variable i_intStoragePosition ) variable ;
+function TowerShakerSetParameters( variable i_intDeviceNumber, variable i_intNumberOfToS, variable i_intFrequencyToS1, variable i_intFrequencyToS2, variable i_intStatusToS1, variable i_intStatusToS2 ) variable ;
+function TowerShakerStartStop( variable i_intDeviceNumber, variable i_blnStartStop, variable i_intStoragePosition ) variable ;
+function UpdateInventory( variable i_intDeviceNumber, variable i_intStartStacker, variable i_intStartLevel, variable i_intStopStacker, variable i_intStopLevel, variable i_intUpdatedStatus ) variable ;
+private function _Abstract(  ) void ;
+// }} ""
+function _InitLibrary() {
+// {{ 2 "AutoInitBlock" ""
+PTL::SetWashingStateDefault("RinseTime1", 5);
+PTL::SetWashingStateDefault("SoakTime1", 5);
+PTL::SetWashingStateDefault("FlowRate1", 11);
+PTL::SetWashingStateDefault("RinseTime2", 0);
+PTL::SetWashingStateDefault("SoakTime2", 0);
+PTL::SetWashingStateDefault("FlowRate2", 11);
+PTL::SetWashingStateDefault("DrainingTime", 10);
+PTL::SetWashingStateDefault("StartWashLiquid", 0);
+PTL::SetLoadingStateDefault("RecoveryOptionContinue", hslTrue);
+PTL::SetLoadingStateDefault("RecoveryOptionExclude", hslTrue);
+PTL::SetLoadingStateDefault("RecoveryOptionDefault", 0);
+PTL::SetLoadingStateDefault("KitLotCheckEnabled", hslFalse);
+// }} ""
+}
+function _ExitLibrary() {
+// {{ 2 "AutoExitBlock" ""
+// }} ""
+}
+// {{{ 5 "Initialize" "Begin"
+function Initialize( variable i_blnSimulationMode, variable i_intTraceLevel, variable i_blnExtendedTrace, variable i_intCOMPort, variable i_intCytomatType, variable i_intNumberOfDevices ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+private variable _intModuleID;
+private variable intLoopCounterDevices;
+// {{ 5 "Initialize" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 65 1 0 "7e28af38_8a49_4202_8d19276dd43898c8" "{4900C1F7-0FB7-4033-8253-760BDB9354DC}"
+_arrintModuleID.SetSize(i_intNumberOfDevices);
+// }} ""
+// {{ 66 1 0 "5346fc96_0abf_45e8_8958d960e346f3d7" "{B31F3532-5D80-11d4-A5EB-0050DA737D89}"
+{
+for(intLoopCounterDevices = 0; intLoopCounterDevices < i_intNumberOfDevices;)
+{
+intLoopCounterDevices = intLoopCounterDevices + 1;
+// }} ""
+// {{ 67 1 0 "48ea2827_09a6_44d0_bd1cd65aee4f09d0" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 68 1 0 "a9a7140d_3f81_493d_a43654e924fa6262" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::Initialize(i_intCOMPort, i_intCytomatType, i_blnSimulationMode, _intModuleID);
+// }} ""
+// {{ 69 1 0 "5d5dcda1_6d58_4e86_ac3bb0ae7db4b4c1" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 70 1 0 "e2cb4ca2_4f77_42ba_8d4005688e1e7d0d" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error during init");
+// }} ""
+// {{{ 71 1 0 "97d30bfa_465b_4ad2_8cb773b1cb5036e5" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 72 1 0 "5d5dcda1_6d58_4e86_ac3bb0ae7db4b4c1" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{ 73 1 0 "8964e5a2_9283_49d4_a41ddcc9f5d3330d" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 74 1 0 "821a80c6_8313_458b_9e9f53ad873bd0f8" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::SetTraceLevel(_intModuleID, i_intTraceLevel);
+// }} ""
+// {{ 75 1 0 "f7e2d624_1cd7_46c7_89c2671211a988c5" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 76 1 0 "d6a63b24_5de9_4c89_9acc30d28a8f9b09" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while set trace level");
+// }} ""
+// {{{ 77 1 0 "ad0fde8c_ad17_44fc_933da86fb4429ef6" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 78 1 0 "f7e2d624_1cd7_46c7_89c2671211a988c5" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{ 79 1 0 "d78b03e2_d9e4_49d8_b3dca1ac2697b078" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 80 1 0 "3e26c9a4_5c6d_4ba2_9d26ebac0c6e80ea" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::SetExtendedTrace(_intModuleID, i_blnExtendedTrace);
+// }} ""
+// {{ 81 1 0 "2b0b5598_2358_4bde_9b165862f406d632" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 82 1 0 "1f2a5fa8_179d_4401_8e44566cd446a1ab" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while set extended trace level");
+// }} ""
+// {{{ 83 1 0 "b009d0eb_8094_4f30_b28499485395a21c" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 84 1 0 "2b0b5598_2358_4bde_9b165862f406d632" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{ 85 1 0 "5a87d161_e504_4d2d_a317c389cd3d2eb5" "{F17B7626-27CB-47f1-8477-8C4158339A6D}"
+_arrintModuleID.SetAt(intLoopCounterDevices-1, _intModuleID);
+// }} ""
+// {{ 86 1 0 "9e2c7e22_21db_4d12_a851cf863a6365af" "{B31F3544-5D80-11d4-A5EB-0050DA737D89}"
+i_intCOMPort = i_intCOMPort + 1;
+// }} ""
+// {{ 87 1 0 "5346fc96_0abf_45e8_8958d960e346f3d7" "{B31F3532-5D80-11d4-A5EB-0050DA737D89}"
+}
+}
+// }} ""
+// {{{ 88 1 0 "51bb2c1c_3d25_47ad_9ae08dd66ef29053" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "Initialize" "End"
+}
+// }} ""
+// {{{ 5 "Terminate" "Begin"
+function Terminate(  ) void {
+// }} ""
+private variable intLoopCounterDevices;
+private variable intNumberOfCytomatsConnected;
+private variable intModuleID;
+// {{ 5 "Terminate" "InitLocals"
+// }} ""
+// {{ 171 1 0 "35381c1c_bdbd_4f6f_a843b7d6b2697018" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{ 172 1 0 "ba93b114_39ee_4dee_92bbe119cc1ba2c0" "{72EACF88-8D49-43e3-92C8-2F90E81E3260}"
+intNumberOfCytomatsConnected=_arrintModuleID.GetSize();
+// }} ""
+// {{ 173 1 0 "405d956d_6e66_44fa_8dd19a1be8f2f29b" "{B31F3532-5D80-11d4-A5EB-0050DA737D89}"
+{
+for(intLoopCounterDevices = 0; intLoopCounterDevices < intNumberOfCytomatsConnected;)
+{
+intLoopCounterDevices = intLoopCounterDevices + 1;
+// }} ""
+// {{ 174 1 0 "5f1b43a0_4e93_4b57_ac1dace44dc750d9" "{67A8F1C9-6546-41e9-AD2F-3C54F7818853}"
+intModuleID=_arrintModuleID.GetAt(intLoopCounterDevices-1);
+// }} ""
+// {{{ 175 1 0 "fadf2d1f_aa8f_4aa0_af96e0ebd230ecf3" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+ThermoScientific_Cytomat_Interface::Terminate(intModuleID);
+// }} ""
+// {{ 176 1 0 "405d956d_6e66_44fa_8dd19a1be8f2f29b" "{B31F3532-5D80-11d4-A5EB-0050DA737D89}"
+}
+}
+// }} ""
+// {{{ 5 "Terminate" "End"
+}
+// }} ""
+// {{{ 5 "_Abstract" "Begin"
+private function _Abstract(  ) void {
+// }} ""
+// {{ 5 "_Abstract" "InitLocals"
+// }} ""
+// {{ 241 1 0 "43791d55_1ece_42e2_9b13252f0f0da035" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 5 "_Abstract" "End"
+}
+// }} ""
+// {{{ 5 "AgitationGetParameters" "Begin"
+function AgitationGetParameters( variable i_intDeviceNumber, variable & o_intAgitationFrequency, variable & o_intAgitationAmplitude ) variable {
+// }} ""
+private variable blnReturnValue;
+private variable strMethodName;
+private variable strFunctionName;
+// {{ 5 "AgitationGetParameters" "InitLocals"
+o_intAgitationFrequency = 0;
+o_intAgitationAmplitude = 0;
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 2 1 0 "a771bab1_4f1e_4a70_a33f6ea370a83d7e" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 3 1 0 "5c360b52_a771_41a6_96e21ff903786feb" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::AgitationGetParameters(_arrintModuleID.ElementAt( i_intDeviceNumber -1), o_intAgitationFrequency, o_intAgitationAmplitude);
+// }} ""
+// {{ 4 1 0 "fa82aa68_b626_4ec3_aa544ae35da64592" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 5 1 0 "26998c16_9629_413e_98d28b6cccb8e50d" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while get agitation parameters");
+// }} ""
+// {{{ 6 1 0 "be17c4d4_b3e9_4eb2_b57f4f92e94a4159" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 7 1 0 "fa82aa68_b626_4ec3_aa544ae35da64592" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 8 1 0 "35ff3ae1_cb1f_4e99_b022c68f28d3f9d0" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "AgitationGetParameters" "End"
+}
+// }} ""
+// {{{ 5 "AgitationSetParameters" "Begin"
+function AgitationSetParameters( variable i_intDeviceNumber, variable i_intAgitationFrequency, variable i_intAgitationAmplitude ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "AgitationSetParameters" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 11 1 0 "f0f222ff_75be_4bb3_a630917351d93d34" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 12 1 0 "912e6e02_eca8_4b59_a540cb76e0a4447b" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::AgitationGetParameters(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intAgitationFrequency, i_intAgitationAmplitude);
+// }} ""
+// {{ 13 1 0 "cc79999e_aaf9_4088_88a41bd4a4826d84" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 14 1 0 "85a52e94_1ab5_42b6_b4ded1f24093d69f" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while set agitation parameters");
+// }} ""
+// {{{ 15 1 0 "7789de54_d171_4e37_92a037c09ce0bec9" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 16 1 0 "cc79999e_aaf9_4088_88a41bd4a4826d84" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 17 1 0 "a5f1d062_043c_4624_b191a30042d6727d" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "AgitationSetParameters" "End"
+}
+// }} ""
+// {{{ 5 "StartStopAgitation" "Begin"
+function StartStopAgitation( variable i_intDeviceNumber, variable i_blnStartStop ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "StartStopAgitation" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 145 1 0 "ee66ecb8_ed87_459c_bb5e066982acd5cf" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (i_blnStartStop == ASWGLOBAL::BOOL::TRUE)
+{
+// }} ""
+// {{ 146 1 0 "32245f66_423b_47c6_b79d575b76308cf8" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 147 1 0 "33a48811_ddcc_4a60_96868a08b70c0963" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::AgitationStart(_arrintModuleID.ElementAt( i_intDeviceNumber -1));
+// }} ""
+// {{ 148 1 0 "cca95dcb_7db5_4249_954646b20ebb219d" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 149 1 0 "8099c9ce_83c5_45c4_99c9d843f84585a1" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while start agitation");
+// }} ""
+// {{{ 150 1 0 "0f9b68fb_9c6f_4005_8154f8e6d0a17c98" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 151 1 0 "cca95dcb_7db5_4249_954646b20ebb219d" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{ 152 1 0 "ee66ecb8_ed87_459c_bb5e066982acd5cf" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+else
+{
+// }} ""
+// {{ 153 1 0 "4e3ea4ed_c7fd_4abb_b5cf9c066249d32d" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 154 1 0 "7a04cdde_1aa7_4a18_a4077f82686f669b" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::AgitationStop(_arrintModuleID.ElementAt( i_intDeviceNumber -1));
+// }} ""
+// {{ 155 1 0 "4d9bf4e8_671a_49f6_880806a9bd2d57da" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 156 1 0 "3d9b3eaf_cc2a_4857_9a63ada583ba57ef" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while stop agitation");
+// }} ""
+// {{{ 157 1 0 "22d837d6_1477_4e08_9b54f92dd93ba6ac" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 158 1 0 "4d9bf4e8_671a_49f6_880806a9bd2d57da" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{ 159 1 0 "ee66ecb8_ed87_459c_bb5e066982acd5cf" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 160 1 0 "83c574ba_c6ef_42c3_93a6deefa800cace" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "StartStopAgitation" "End"
+}
+// }} ""
+// {{{ 5 "GetCytomatState" "Begin"
+function GetCytomatState( variable i_intDeviceNumber, variable & o_blnBusy, variable & o_blnReady, variable & o_blnWarning, variable & o_blnError, variable & o_blnHandler, variable & o_blnGate, variable & o_blnDoor, variable & o_blnTransfer ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "GetCytomatState" "InitLocals"
+o_blnBusy = 0;
+o_blnReady = 0;
+o_blnWarning = 0;
+o_blnError = 0;
+o_blnHandler = 0;
+o_blnGate = 0;
+o_blnDoor = 0;
+o_blnTransfer = 0;
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 20 1 0 "ca1e21cf_6c9e_4f24_8053fa7e912debd5" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 21 1 0 "739a1427_8b59_43a1_bc2db6c55d8860a1" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::GetCytomatState(_arrintModuleID.ElementAt( i_intDeviceNumber -1), o_blnBusy, o_blnReady, o_blnWarning, o_blnError, o_blnHandler, o_blnGate, o_blnDoor, o_blnTransfer);
+// }} ""
+// {{ 22 1 0 "4ad24b54_4373_4e64_87fef93fa6c37263" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 23 1 0 "9caa3113_2480_4f4e_981e5f755795b710" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while get cytomat state");
+// }} ""
+// {{{ 24 1 0 "f3c8f9c9_6c8e_4c99_9d9e6300e1f6efab" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 25 1 0 "4ad24b54_4373_4e64_87fef93fa6c37263" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 26 1 0 "f0c92174_d33a_4513_aa3313ecc889d28c" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "GetCytomatState" "End"
+}
+// }} ""
+// {{{ 5 "GetEnvironment" "Begin"
+function GetEnvironment( variable i_intDeviceNumber, variable & o_fltTemperatureNominal, variable & o_fltTemperatureActual, variable & o_fltHumidityNominal, variable & o_fltHumidityActual, variable & o_fltCO2Nominal, variable & o_fltCO2Actual, variable & o_fltO2Nominal, variable & o_fltO2Actual ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "GetEnvironment" "InitLocals"
+o_fltTemperatureNominal = 0;
+o_fltTemperatureActual = 0;
+o_fltHumidityNominal = 0;
+o_fltHumidityActual = 0;
+o_fltCO2Nominal = 0;
+o_fltCO2Actual = 0;
+o_fltO2Nominal = 0;
+o_fltO2Actual = 0;
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 29 1 0 "f89b46d4_0fad_4292_82f26b921b1c6407" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 30 1 0 "b19203b5_d3d2_4fa1_a87c5de9e3761fb6" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::GetEnvironment(_arrintModuleID.ElementAt( i_intDeviceNumber -1), o_fltTemperatureNominal, o_fltTemperatureActual, o_fltHumidityNominal, o_fltHumidityActual, o_fltCO2Nominal, o_fltCO2Actual, o_fltO2Nominal, o_fltO2Actual);
+// }} ""
+// {{ 31 1 0 "2634f111_c72b_40bb_968af2cd3fb390e8" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 32 1 0 "878ca7f0_e1ff_466d_abd9cd57c94c5f9c" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while get environment");
+// }} ""
+// {{{ 33 1 0 "8320e9c9_2c6e_433c_a9b700ef0ec06260" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 34 1 0 "2634f111_c72b_40bb_968af2cd3fb390e8" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 35 1 0 "ef5bd4fe_a679_4886_b5f6eeb6f8116a3d" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "GetEnvironment" "End"
+}
+// }} ""
+// {{{ 5 "GetLabwareIDs" "Begin"
+function GetLabwareIDs( variable i_intDeviceNumber, variable i_intStacker, variable i_blnWaitForFinish, variable & o_arrStrLabwareIDs[] ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "GetLabwareIDs" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 38 1 0 "206341f9_6f92_43e3_959c90bbc793be39" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 39 1 0 "93b03be6_c18c_4497_93d1a894be7f4195" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::GetLabwareIDs(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStacker, i_blnWaitForFinish, o_arrStrLabwareIDs);
+// }} ""
+// {{ 40 1 0 "f4f92b30_6cfe_47e1_b7788ed2b96b4f56" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 41 1 0 "cbbb3ea4_6d88_42c7_95247eebffe013c2" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while get labware IDs");
+// }} ""
+// {{{ 42 1 0 "458bfc5c_ecb2_43ff_abe1345bb9221151" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 43 1 0 "f4f92b30_6cfe_47e1_b7788ed2b96b4f56" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 44 1 0 "22737d8d_946b_45ba_b207aec6e608454c" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "GetLabwareIDs" "End"
+}
+// }} ""
+// {{{ 5 "GetPlateByLabwareID" "Begin"
+function GetPlateByLabwareID( variable i_intDeviceNumber, variable i_strLabwareID, variable i_blnWaitForFinish ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "GetPlateByLabwareID" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 47 1 0 "22d9bfee_222e_46fa_b2bc91b50a8de40c" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 48 1 0 "1e1b6ef0_99de_4193_b35bcde1b0dfea45" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::GetPlateByLabwareID(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_strLabwareID, i_blnWaitForFinish);
+// }} ""
+// {{ 49 1 0 "8732297c_188d_4a3e_b91752b82ff2b27e" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 50 1 0 "47e15ee7_b057_45ee_b87f878a9f15e9b2" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while get plate by labware ID");
+// }} ""
+// {{{ 51 1 0 "9290d6cf_3ed3_4982_b562cb79e2e1bcad" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 52 1 0 "8732297c_188d_4a3e_b91752b82ff2b27e" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 53 1 0 "8272d644_7ff9_4249_affa4a9abacc1715" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "GetPlateByLabwareID" "End"
+}
+// }} ""
+// {{{ 5 "GetPlateByPosition" "Begin"
+function GetPlateByPosition( variable i_intDeviceNumber, variable i_intStacker, variable i_intLevel, variable i_blnWaitForFinish ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "GetPlateByPosition" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 56 1 0 "8a4e37a5_51dd_4ece_909b4f74bb5380a8" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 57 1 0 "cbad3a87_5833_4567_b404c9c971b322d3" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::GetPlateByPosition(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStacker, i_intLevel, i_blnWaitForFinish);
+// }} ""
+// {{ 58 1 0 "b1548b0b_786b_419e_bb4a69daab51c6f0" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 59 1 0 "b9c45b26_cd83_4f29_832b38066ae4f874" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while get plate by position");
+// }} ""
+// {{{ 60 1 0 "4c60499d_ccc2_46a2_a6bf87c4c72ca4e2" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 61 1 0 "b1548b0b_786b_419e_bb4a69daab51c6f0" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 62 1 0 "fa72f86a_138b_4143_b82839b8509d902f" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "GetPlateByPosition" "End"
+}
+// }} ""
+// {{{ 5 "InventoryScanFull" "Begin"
+function InventoryScanFull( variable i_intDeviceNumber, variable i_blnWaitForFinish ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "InventoryScanFull" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 91 1 0 "f9e84936_6052_40f6_8f6460287a50c3cd" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 92 1 0 "cdd889f4_3609_4873_a3bf9c84a1ffa54f" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::InventoryScanFull(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_blnWaitForFinish);
+// }} ""
+// {{ 93 1 0 "c7b4e3f9_73b6_48bb_99bdf2a6b23c92d5" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 94 1 0 "bd4feec4_45e2_4612_957d8ea72b9cfdaa" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while inventory scan full");
+// }} ""
+// {{{ 95 1 0 "b853e0fd_52e4_4bb6_b3fa380f5e0d9b87" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 96 1 0 "c7b4e3f9_73b6_48bb_99bdf2a6b23c92d5" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 97 1 0 "31e5fa75_4700_4fb7_b00b3a534f74af74" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "InventoryScanFull" "End"
+}
+// }} ""
+// {{{ 5 "InventoryScanPartial" "Begin"
+function InventoryScanPartial( variable i_intDeviceNumber, variable i_intStartStacker, variable i_intStopStacker, variable i_blnWaitForFinish ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "InventoryScanPartial" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 100 1 0 "fad2317f_4552_4127_b5f461573cf687b2" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 101 1 0 "8904227b_1deb_43e8_a1df1b3a8efa9302" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::InventoryScanPartial(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStartStacker, i_intStopStacker, i_blnWaitForFinish);
+// }} ""
+// {{ 102 1 0 "054e3dfc_2c76_4943_97c2d9c651e4927a" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 103 1 0 "c03ad3f0_f4a2_4515_ab127baa32f18769" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while inventory scan partial");
+// }} ""
+// {{{ 104 1 0 "f5173824_73d9_4685_98faade82d769629" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 105 1 0 "054e3dfc_2c76_4943_97c2d9c651e4927a" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 106 1 0 "69371ce7_dcea_4551_8d0097ca68cddfe6" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "InventoryScanPartial" "End"
+}
+// }} ""
+// {{{ 5 "SendFirmwareCommand" "Begin"
+function SendFirmwareCommand( variable i_intDeviceNumber, variable i_strCommand, variable i_blnWaitForFinish, variable & o_strResponse ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "SendFirmwareCommand" "InitLocals"
+o_strResponse = 0;
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 118 1 0 "050db153_dd0c_4461_93d01774a4808779" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 119 1 0 "017ef5cb_fa4c_4e78_8054c2d4812623e1" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::SendFirmwareCommand(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_strCommand, i_blnWaitForFinish, o_strResponse);
+// }} ""
+// {{ 120 1 0 "1592c9f4_eddf_4110_82e213aa1c931a7f" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 121 1 0 "cd22c339_d5ee_4b65_bcfafa928a388f5d" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Send firmware command");
+// }} ""
+// {{{ 122 1 0 "d44890dd_0f61_4dad_a99e94aaa7766d77" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 123 1 0 "1592c9f4_eddf_4110_82e213aa1c931a7f" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 124 1 0 "426c8a48_a331_4258_9ecf89f159b88155" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "SendFirmwareCommand" "End"
+}
+// }} ""
+// {{{ 5 "SetEnvironment" "Begin"
+function SetEnvironment( variable i_intDeviceNumber, variable i_fltTemperatureNominal, variable i_fltHumidityNominal, variable i_fltCO2Nominal, variable i_fltO2Nominal ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "SetEnvironment" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 127 1 0 "175ed9aa_5fc3_4b4d_937c3e11eed8de27" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 128 1 0 "25a6e480_cdac_4a99_a51e0d478c6de6e8" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::SetEnvironment(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_fltTemperatureNominal, i_fltHumidityNominal, i_fltCO2Nominal, i_fltO2Nominal);
+// }} ""
+// {{ 129 1 0 "39c74e88_a3c0_43a9_b00d7d54bba14fb9" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 130 1 0 "7eaa5d88_24f0_4a25_9e8e8f25772651c3" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while get environment");
+// }} ""
+// {{{ 131 1 0 "8640669d_e6ee_4874_b433fe5ceccce514" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 132 1 0 "39c74e88_a3c0_43a9_b00d7d54bba14fb9" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 133 1 0 "1a304739_55a2_4081_b16cf31806a332e0" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "SetEnvironment" "End"
+}
+// }} ""
+// {{{ 5 "SetPitch" "Begin"
+function SetPitch( variable i_intDeviceNumber, variable i_intStacker, variable i_intPitch ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "SetPitch" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 136 1 0 "ba6d6a8d_908a_4c9b_a050dfe217ab80b9" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 137 1 0 "b8989875_178d_40b5_a28d49e686f3068d" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::SetPitch(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStacker, i_intPitch);
+// }} ""
+// {{ 138 1 0 "7351b784_a9f0_4ac6_8b7085864b051e5a" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 139 1 0 "51f16330_6615_422e_9222233cab0914fa" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while get environment");
+// }} ""
+// {{{ 140 1 0 "031b4a7b_4fb2_49f0_b679843485d78544" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 141 1 0 "7351b784_a9f0_4ac6_8b7085864b051e5a" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 142 1 0 "1881691f_66f9_4364_82885343e6a395f9" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "SetPitch" "End"
+}
+// }} ""
+// {{{ 5 "TowerShakerOpenCloseClamp" "Begin"
+function TowerShakerOpenCloseClamp( variable i_intDeviceNumber, variable i_blnOpenClose, variable i_intStoragePosition ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "TowerShakerOpenCloseClamp" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 188 1 0 "b2c13a98_0767_4e24_b552e2b4bf7089cf" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (i_blnOpenClose == ASWGLOBAL::BOOL::TRUE)
+{
+// }} ""
+// {{ 189 1 0 "0c7b43f1_14d1_4bda_9cc271dbd9049353" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 190 1 0 "d8936b7c_50e4_42dc_a6d0921c9b143cc1" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::TowerShakerOpenClamp(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStoragePosition);
+// }} ""
+// {{ 191 1 0 "c3c51fa1_4e4a_4a36_8165bb85a3c4b48f" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 192 1 0 "9b186c49_1b05_4382_b3c8a9ea7efd08c1" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while open clamp");
+// }} ""
+// {{{ 193 1 0 "4808ed80_af9b_4fbd_b05c4fbd26eaa2cd" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 194 1 0 "c3c51fa1_4e4a_4a36_8165bb85a3c4b48f" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{ 195 1 0 "b2c13a98_0767_4e24_b552e2b4bf7089cf" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+else
+{
+// }} ""
+// {{ 196 1 0 "caeeeb4c_2b8f_497c_8f38af4be905b11a" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 197 1 0 "afd41822_32dc_44c0_9c32e8aa578ce230" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::TowerShakerCloseClamp(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStoragePosition);
+// }} ""
+// {{ 198 1 0 "1bdd1c7c_7aac_4852_af6c9de1c5b47b5b" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 199 1 0 "1e366b5a_81db_457a_878c03707b4ce72a" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while close clamp");
+// }} ""
+// {{{ 200 1 0 "27fb39a1_02e8_4555_b2556ea42ec8834c" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 201 1 0 "1bdd1c7c_7aac_4852_af6c9de1c5b47b5b" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{ 202 1 0 "b2c13a98_0767_4e24_b552e2b4bf7089cf" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 203 1 0 "de11b7d2_7033_41e8_8c7ae6eaf83f7410" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "TowerShakerOpenCloseClamp" "End"
+}
+// }} ""
+// {{{ 5 "TowerShakerGetParameters" "Begin"
+function TowerShakerGetParameters( variable i_intDeviceNumber, variable & o_intNumberOfToS, variable & o_intFrequencyToS1, variable & o_intFrequencyToS2, variable & o_intStatusToS1, variable & o_intStatusToS2 ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "TowerShakerGetParameters" "InitLocals"
+o_intNumberOfToS = 0;
+o_intFrequencyToS1 = 0;
+o_intFrequencyToS2 = 0;
+o_intStatusToS1 = 0;
+o_intStatusToS2 = 0;
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 179 1 0 "f55a43c3_be4d_4099_8ede01dabe2a476a" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 180 1 0 "cb9c60ee_00cf_402b_9c3e6469e086ccd6" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::TowerShakerGetParameters(_arrintModuleID.ElementAt( i_intDeviceNumber -1), o_intNumberOfToS, o_intFrequencyToS1, o_intFrequencyToS2, o_intStatusToS1, o_intStatusToS2);
+// }} ""
+// {{ 181 1 0 "16c2210a_f296_4201_b6f2e7c16261b41a" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 182 1 0 "8f3e0b63_3420_45b0_96cc201ccd73cef6" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while get shaker parameters");
+// }} ""
+// {{{ 183 1 0 "fba80c94_1cc2_460f_b06f83bace08b626" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 184 1 0 "16c2210a_f296_4201_b6f2e7c16261b41a" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 185 1 0 "0942ef7b_93d3_48e6_95f4b31cf8e1e5ac" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "TowerShakerGetParameters" "End"
+}
+// }} ""
+// {{{ 5 "TowerShakerSetParameters" "Begin"
+function TowerShakerSetParameters( variable i_intDeviceNumber, variable i_intNumberOfToS, variable i_intFrequencyToS1, variable i_intFrequencyToS2, variable i_intStatusToS1, variable i_intStatusToS2 ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "TowerShakerSetParameters" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 206 1 0 "a41c4d91_6c30_4c27_9f69116086a363e7" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 207 1 0 "f150a06e_30d6_4588_9ac29c2f67e2aa0d" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::TowerShakerSetParameters(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intNumberOfToS, i_intFrequencyToS1, i_intFrequencyToS2, i_intStatusToS1, i_intStatusToS2);
+// }} ""
+// {{ 208 1 0 "f8179618_9f9a_479c_9437a73a2a726b01" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 209 1 0 "46e9f595_1e01_492c_bb1e3acff8f0f8d4" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while set shaker parameters");
+// }} ""
+// {{{ 210 1 0 "ede93e92_1c57_4fd1_ad5c67ca073e0834" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 211 1 0 "f8179618_9f9a_479c_9437a73a2a726b01" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 212 1 0 "84cde26b_744f_4223_bd466664928fb8dc" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "TowerShakerSetParameters" "End"
+}
+// }} ""
+// {{{ 5 "TowerShakerStartStop" "Begin"
+function TowerShakerStartStop( variable i_intDeviceNumber, variable i_blnStartStop, variable i_intStoragePosition ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "TowerShakerStartStop" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 215 1 0 "a64c4ba5_4683_432d_a471d5ed57821fbd" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (i_blnStartStop == ASWGLOBAL::BOOL::TRUE)
+{
+// }} ""
+// {{ 216 1 0 "d4c94800_05bd_45b0_98f11740971bfe36" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 217 1 0 "b2fd48a7_e7e8_4948_8cfbdeda86e7e5f3" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::TowerShakerStart(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStoragePosition);
+// }} ""
+// {{ 218 1 0 "bfd8f989_4c0a_4372_ab38e36fc0f09683" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 219 1 0 "15438aab_f7d1_4f47_9f0802e33941e04e" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while open clamp");
+// }} ""
+// {{{ 220 1 0 "5163c4f6_95a4_4bb9_98337c2895164ba1" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 221 1 0 "bfd8f989_4c0a_4372_ab38e36fc0f09683" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{ 222 1 0 "a64c4ba5_4683_432d_a471d5ed57821fbd" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+else
+{
+// }} ""
+// {{ 223 1 0 "2bb19cc5_3aa9_45b4_93fc0dc50e1e3bed" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 224 1 0 "9719fef7_4daf_4fdf_925153bd63db7248" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::TowerShakerStop(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStoragePosition);
+// }} ""
+// {{ 225 1 0 "d6807042_85e1_493f_bb5fb2110d1b37fa" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 226 1 0 "e0982403_fbfc_4f35_99b2949c7e8a442e" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while close clamp");
+// }} ""
+// {{{ 227 1 0 "1229a078_a44f_4932_9429d0908f51d3d0" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 228 1 0 "d6807042_85e1_493f_bb5fb2110d1b37fa" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{ 229 1 0 "a64c4ba5_4683_432d_a471d5ed57821fbd" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 230 1 0 "06344fcf_8f00_4194_9292e8d3aca0d37d" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "TowerShakerStartStop" "End"
+}
+// }} ""
+// {{{ 5 "StorePlateByPosition" "Begin"
+function StorePlateByPosition( variable i_intDeviceNumber, variable i_intStacker, variable i_intLevel, variable i_blnWaitForFinish ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "StorePlateByPosition" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 163 1 0 "40e33d29_fa86_4f0d_8d6c23f25771581d" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 164 1 0 "02c10e1a_7a1d_4354_84367e60b9f6b5ff" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::StorePlateByPosition(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStacker, i_intLevel, i_blnWaitForFinish);
+// }} ""
+// {{ 165 1 0 "aff637f9_a41e_49f4_9bf94f36ed9682b1" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 166 1 0 "26bec5b4_ad4a_4a4a_b3bfb5221c76724e" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while store plate by position");
+// }} ""
+// {{{ 167 1 0 "3ca642fb_212a_47d7_addddf94bcf489b7" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 168 1 0 "aff637f9_a41e_49f4_9bf94f36ed9682b1" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 169 1 0 "a88c3717_6aff_460e_a2297bfbb252f458" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "StorePlateByPosition" "End"
+}
+// }} ""
+// {{{ 5 "UpdateInventory" "Begin"
+function UpdateInventory( variable i_intDeviceNumber, variable i_intStartStacker, variable i_intStartLevel, variable i_intStopStacker, variable i_intStopLevel, variable i_intUpdatedStatus ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "UpdateInventory" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 233 1 0 "60aafb8b_f8bd_4c39_b70e658dc1f80bdf" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 234 1 0 "a62cca1a_ba10_49af_81c99f87d72d18c3" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::UpdateInventory(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intStartStacker, i_intStartLevel, i_intStopStacker, i_intStopLevel, i_intUpdatedStatus);
+// }} ""
+// {{ 235 1 0 "64b8095a_ead2_4342_b2c1aba1e54972f8" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 236 1 0 "ed8b5aa2_2881_4339_bfacc3b22de830b2" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while update inventory");
+// }} ""
+// {{{ 237 1 0 "1db16857_4775_42a7_bbf3ec182bda1d91" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 238 1 0 "64b8095a_ead2_4342_b2c1aba1e54972f8" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 239 1 0 "2ab9e8f5_5422_4f13_864c1e314caae0cf" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "UpdateInventory" "End"
+}
+// }} ""
+// {{{ 5 "MoveTransferstation" "Begin"
+function MoveTransferstation( variable i_intDeviceNumber, variable i_intPositionTransferStation, variable i_blnWaitForFinish ) variable {
+// }} ""
+private variable strMethodName;
+private variable strFunctionName;
+private variable blnReturnValue;
+// {{ 5 "MoveTransferstation" "InitLocals"
+// }} ""
+strFunctionName = GetFunctionName();
+strMethodName = GetMethodFileName();
+// {{ 109 1 0 "6030cd4b_61e7_480e_8ed1903369c34ddf" "{F07B0071-8EFC-11d4-A3BA-002035848439}"
+
+// }} ""
+// {{{ 110 1 0 "677c37aa_4b14_4d3a_a24a87293092c1a7" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+blnReturnValue = ThermoScientific_Cytomat_Interface::MoveTransferStation(_arrintModuleID.ElementAt( i_intDeviceNumber -1), i_intPositionTransferStation, i_blnWaitForFinish);
+// }} ""
+// {{ 111 1 0 "c0dbdae9_26a5_4a54_ba332dea7634362d" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+if (blnReturnValue == ASWGLOBAL::BOOL::FALSE)
+{
+// }} ""
+// {{{ 112 1 0 "059ef201_8da9_436c_84b30f456fd38b83" "{C1F3C015-47B3-4514-9407-AC2E65043419}"
+TRACELEVEL::TraceAction(TRACE_LEVEL_DEBUG, TRACELEVEL::ACTION::COMPLETE_WITH_ERROR, strFunctionName, strMethodName, "Error while move transferstation");
+// }} ""
+// {{{ 113 1 0 "7b688e8a_ab88_4191_8c7d13e59edbb05d" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::FALSE);
+// }} ""
+// {{ 114 1 0 "c0dbdae9_26a5_4a54_ba332dea7634362d" "{B31F3531-5D80-11d4-A5EB-0050DA737D89}"
+}
+// }} ""
+// {{{ 115 1 0 "a21e6ae1_0a08_4739_b3a6c283003eb9c3" "{9EC997CD-FD3B-4280-811B-49E99DCF062C}"
+return (ASWGLOBAL::BOOL::TRUE);
+// }} ""
+// {{{ 5 "MoveTransferstation" "End"
+}
+// }} ""
+/* {{ 2 "SubmethodInsertLine" "" */ // }} ""
+// {{{ 2 "LibraryNamespace" "End"
+} // library namespace
+// }} ""
+// $$author=Hamilton$$valid=0$$time=2023-02-08 06:28$$checksum=49982095$$length=087$$

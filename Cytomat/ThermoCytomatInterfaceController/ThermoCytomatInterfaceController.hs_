@@ -1,0 +1,38 @@
+
+// this ALWAYS GENERATED file contains the sub-method library header
+// Generated at 08/02/2023 06:28:02
+
+#pragma once
+#ifndef HSL_RUNTIME
+namespace THERMOCYTOMATINTERFACECONTROLLER {
+function _InitLibrary() { }
+function _ExitLibrary() { }
+function AgitationGetParameters( variable i_intDeviceNumber, variable & o_intAgitationFrequency, variable & o_intAgitationAmplitude ) variable {  return (0); }
+function AgitationSetParameters( variable i_intDeviceNumber, variable i_intAgitationFrequency, variable i_intAgitationAmplitude ) variable {  return (0); }
+function GetCytomatState( variable i_intDeviceNumber, variable & o_blnBusy, variable & o_blnReady, variable & o_blnWarning, variable & o_blnError, variable & o_blnHandler, variable & o_blnGate, variable & o_blnDoor, variable & o_blnTransfer ) variable {  return (0); }
+function GetEnvironment( variable i_intDeviceNumber, variable & o_fltTemperatureNominal, variable & o_fltTemperatureActual, variable & o_fltHumidityNominal, variable & o_fltHumidityActual, variable & o_fltCO2Nominal, variable & o_fltCO2Actual, variable & o_fltO2Nominal, variable & o_fltO2Actual ) variable {  return (0); }
+function GetLabwareIDs( variable i_intDeviceNumber, variable i_intStacker, variable i_blnWaitForFinish, variable & o_arrStrLabwareIDs[] ) variable {  return (0); }
+function GetPlateByLabwareID( variable i_intDeviceNumber, variable i_strLabwareID, variable i_blnWaitForFinish ) variable {  return (0); }
+function GetPlateByPosition( variable i_intDeviceNumber, variable i_intStacker, variable i_intLevel, variable i_blnWaitForFinish ) variable {  return (0); }
+function Initialize( variable i_blnSimulationMode, variable i_intTraceLevel, variable i_blnExtendedTrace, variable i_intCOMPort, variable i_intCytomatType, variable i_intNumberOfDevices ) variable {  return (0); }
+function InventoryScanFull( variable i_intDeviceNumber, variable i_blnWaitForFinish ) variable {  return (0); }
+function InventoryScanPartial( variable i_intDeviceNumber, variable i_intStartStacker, variable i_intStopStacker, variable i_blnWaitForFinish ) variable {  return (0); }
+function MoveTransferstation( variable i_intDeviceNumber, variable i_intPositionTransferStation, variable i_blnWaitForFinish ) variable {  return (0); }
+function SendFirmwareCommand( variable i_intDeviceNumber, variable i_strCommand, variable i_blnWaitForFinish, variable & o_strResponse ) variable {  return (0); }
+function SetEnvironment( variable i_intDeviceNumber, variable i_fltTemperatureNominal, variable i_fltHumidityNominal, variable i_fltCO2Nominal, variable i_fltO2Nominal ) variable {  return (0); }
+function SetPitch( variable i_intDeviceNumber, variable i_intStacker, variable i_intPitch ) variable {  return (0); }
+function StartStopAgitation( variable i_intDeviceNumber, variable i_blnStartStop ) variable {  return (0); }
+function StorePlateByPosition( variable i_intDeviceNumber, variable i_intStacker, variable i_intLevel, variable i_blnWaitForFinish ) variable {  return (0); }
+function Terminate(  ) void { }
+function TowerShakerGetParameters( variable i_intDeviceNumber, variable & o_intNumberOfToS, variable & o_intFrequencyToS1, variable & o_intFrequencyToS2, variable & o_intStatusToS1, variable & o_intStatusToS2 ) variable {  return (0); }
+function TowerShakerOpenCloseClamp( variable i_intDeviceNumber, variable i_blnOpenClose, variable i_intStoragePosition ) variable {  return (0); }
+function TowerShakerSetParameters( variable i_intDeviceNumber, variable i_intNumberOfToS, variable i_intFrequencyToS1, variable i_intFrequencyToS2, variable i_intStatusToS1, variable i_intStatusToS2 ) variable {  return (0); }
+function TowerShakerStartStop( variable i_intDeviceNumber, variable i_blnStartStop, variable i_intStoragePosition ) variable {  return (0); }
+function UpdateInventory( variable i_intDeviceNumber, variable i_intStartStacker, variable i_intStartLevel, variable i_intStopStacker, variable i_intStopLevel, variable i_intUpdatedStatus ) variable {  return (0); }
+} // namespace
+#endif
+
+#ifdef HSL_RUNTIME
+#include __filename__ ".hsi"
+#endif
+// $$author=Hamilton$$valid=0$$time=2023-02-08 06:28$$checksum=09c8c77e$$length=085$$
